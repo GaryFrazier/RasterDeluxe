@@ -3,17 +3,15 @@
 #include <windows.h>
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
-	printf("Message Handled\n");
+	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 int main(void) {
-	printf("Hello World!\n");
-
 	HINSTANCE hInstance = GetModuleHandle(NULL);
-	const LPCSTR windowClassName = "Window Class";
+	const LPCWSTR windowClassName = L"Window Class";
 	WNDCLASS windowClass = {};
 
-	windowClass.lpfWndProc = WindowProc;
+	windowClass.lpfnWndProc = WindowProc;
 	windowClass.hInstance = hInstance;
 	windowClass.lpszClassName = windowClassName;
 
@@ -36,8 +34,17 @@ int main(void) {
 
 	if (hwnd == NULL)
 	{
+		printf("Error creating window, with error code: %lu\n", GetLastError());
 		return 0;
 	}
+
+	ShowWindow(hwnd, SW_SHOW);
+
+	MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
 
 	return 0;
 }
