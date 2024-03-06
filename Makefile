@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror
+LIBS = -lgdi32
 SRCDIR = src
 OUTPUTDIR = bin
 SOURCES = $(shell find $(SRCDIR) -name '*.c')
@@ -11,7 +12,7 @@ EXECUTABLE = $(OUTPUTDIR)/rd.exe
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 $(OUTPUTDIR)/%.o: $(SOURCES)
 	$(CC) $(CFLAGS) -c $< -o $@
