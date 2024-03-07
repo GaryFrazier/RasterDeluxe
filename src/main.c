@@ -5,16 +5,25 @@
 int width;
 int height;
 BYTE* pixelBuffer;
+BYTE* pixelBuffer2;
+BYTE* pixelBufferTemp;
 
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	switch (uMsg)
-	{
-	case WM_PAINT:; // nop
+const int TARGET_FPS = 60;
+const double TARGET_FRAME_TIME = 1000.0 / TARGET_FPS; // Target frame time in milliseconds
+
+// Timer ID
+#define IDT_TIMER1 1
+
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+	switch (uMsg) {
+	case WM_TIMER:
+		// called when frame timer triggers
+		InvalidateRect(hwnd, NULL, TRUE);
+        break;
+	case WM_PAINT:
+		; // nop
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps); // handle device context
-
-		FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1)); // wipe screen
 
 		BITMAPINFOHEADER bmh = {
 			sizeof(BITMAPINFOHEADER),
@@ -71,8 +80,25 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int main(void)
-{
+void GameLoop(unsigned int frame) {
+	memcpy(pixelBuffer2, pixelBuffer, width * height * 3);
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
+			int rowOffset = j * width * 3;
+			int columnOffset = i * 3;
+			int totalOffset = rowOffset + columnOffset;
+			pixelBuffer2[totalOffset] = (frame + i) % 0xff;
+			pixelBuffer2[totalOffset + 1] = (frame + j) % 0xff;
+			pixelBuffer2[totalOffset + 2] = (frame + i + j) % 0xff;
+		}
+	}
+
+	pixelBufferTemp = pixelBuffer2;
+	pixelBuffer2 = pixelBuffer;
+	pixelBuffer = pixelBufferTemp;
+}
+
+int main(void) {
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	const LPCWSTR windowClassName = L"Window Class";
 	WNDCLASS windowClass = {};
@@ -115,11 +141,44 @@ int main(void)
 	pixelBuffer = calloc(width * height, 24);
 	memset(pixelBuffer, 125, width * height * 3);
 
+	pixelBuffer2 = calloc(width * height, 24);
+	memset(pixelBuffer2, 125, width * height * 3);
+	SetTimer(hwnd, IDT_TIMER1, TARGET_FRAME_TIME, NULL);
+
 	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0))
+
+	unsigned int frame = 0;
+
+	while (1)
 	{
+		GameLoop(frame);
+
+		if (!GetMessage(&msg, NULL, 0, 0))
+		{
+			return 0;
+		}
+
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
+
+		// Record the start time of the frame
+        DWORD startTime = GetTickCount();
+
+        // Your rendering code goes here
+
+        // Calculate the time elapsed since the start of the frame
+        DWORD elapsedTime = GetTickCount() - startTime;
+
+        // Calculate the remaining time to maintain the desired framerate
+        int remainingTime = (int)(TARGET_FRAME_TIME - elapsedTime);
+
+        // If the remaining time is positive, sleep for that duration
+        if (remainingTime > 0)
+        {
+            Sleep(remainingTime);
+        }
+
+		frame++;
 	}
 
 	return 0;
