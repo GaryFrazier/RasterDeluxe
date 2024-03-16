@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     int quit = 0;
 
     // Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
@@ -33,6 +33,9 @@ int main(int argc, char *argv[]) {
         printf("Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
+    
+    long currentTick = SDL_GetTicks64();
+    long frameRate = 0;
 
     // Main loop
     while (!quit) {
@@ -45,6 +48,20 @@ int main(int argc, char *argv[]) {
             }
         }
 
+        // Update tick info
+        long newTick = SDL_GetTicks64();
+        long numTicksInFrame = newTick - currentTick;
+
+        if (numTicksInFrame > 0) {
+            frameRate = 1000 / (newTick - currentTick); // 1000 ms / ms in last frame
+            printf("fps: %ld\n", frameRate);
+        } else {
+            frameRate = 0;
+            printf("fps: inf\n");
+        }
+
+        currentTick = newTick;
+        
         // Clear screen
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
         SDL_RenderClear(renderer);
