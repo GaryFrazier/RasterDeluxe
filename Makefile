@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Werror
-LIBS = -lSDL2 -lSDL2_ttf
+LIBS = -lSDL2 
 LIBDIR= -L./lib
-INCLUDEDIR= -I./include/SDL
+INCLUDEDIR= -I./include
 SRCDIR = src
 OUTPUTDIR = bin
 SOURCES = $(shell find $(SRCDIR) -name '*.c')

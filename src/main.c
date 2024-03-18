@@ -1,16 +1,12 @@
 #define SDL_MAIN_HANDLED
 
 #include <stdio.h>
-#include "external/SDL_FontCache/SDL_Fontcache.h"
+#include <SDL/SDL.h>
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
-#define UNUSED(x) (void)(x)
 
 int main(int argc, char *argv[]) {
-    UNUSED(argc);
-    UNUSED(argv);
-
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
     SDL_Event event;
@@ -23,7 +19,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Create window
-    window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (window == NULL) {
         printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
@@ -35,13 +32,12 @@ int main(int argc, char *argv[]) {
         printf("Renderer could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
-    
-    // Init font
-    FC_Font* font = FC_CreateFont();  
-    FC_LoadFont(font, renderer, "Courier New.ttf", 20, FC_MakeColor(0,0,0,255), TTF_STYLE_NORMAL);
 
     long currentTick = SDL_GetTicks64();
     long frameRate = 0;
+    
+    int width;
+    int height;
 
     // Main loop
     while (!quit) {
@@ -64,20 +60,42 @@ int main(int argc, char *argv[]) {
             frameRate = 0;
         }
 
-        FC_Draw(font, renderer, 0, 0, "This is %s.\n It works.", "example text");
-
         currentTick = newTick;
         
         // Clear screen
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
         SDL_RenderClear(renderer);
 
+        // Create surface
+        SDL_GetRendererOutputSize(renderer, &width, &height);
+        SDL_Surface* surface = SDL_CreateRGBSurface(0, width, height, 32, 0, 0, 0, 0);
+
+        SDL_LockSurface(surface);
+        SDL_memset(surface->pixels, 128, surface->h * surface->pitch);
+        SDL_UnlockSurface(surface);
+        
+        if (surface == NULL) {
+            printf("Surface could not be created: %s", SDL_GetError());
+            quit = 1;
+            break;
+        }
+
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface); // optimize?
+
+        if (texture == NULL) {
+            printf("Texture could not be created: %s", SDL_GetError());
+            quit = 1;
+            break;
+        }
+
+        SDL_RenderCopy(renderer, texture, NULL, NULL);
+
         // Update screen
         SDL_RenderPresent(renderer);
     }
 
     // Cleanup
-    FC_FreeFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
