@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror
-LIBS = -lSDL2
+CFLAGS = -Werror
+LIBS = -lSDL2 -lSDL2_ttf
 LIBDIR= -L./lib
-INCLUDEDIR= -I./include
+INCLUDEDIR= -I./include/SDL
 SRCDIR = src
 OUTPUTDIR = bin
 SOURCES = $(shell find $(SRCDIR) -name '*.c')
@@ -17,7 +17,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $@  $(LIBDIR) $(LIBS)
 
 $(OUTPUTDIR)/%.o: $(SOURCES)
-	$(CC) $(CFLAGS) $(INCLUDEDIR) -c $< -o $@
+	$(CC) $(INCLUDEDIR) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OUTPUTDIR)/*

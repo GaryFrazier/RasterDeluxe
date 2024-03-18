@@ -1,5 +1,7 @@
 #define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
+
+#include <stdio.h>
+#include "external/SDL_FontCache/SDL_Fontcache.h"
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
@@ -26,7 +28,7 @@ int main(int argc, char *argv[]) {
         printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
         return 1;
     }
-
+    
     // Create renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (renderer == NULL) {
@@ -34,6 +36,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
+    // Init font
+    FC_Font* font = FC_CreateFont();  
+    FC_LoadFont(font, renderer, "Courier New.ttf", 20, FC_MakeColor(0,0,0,255), TTF_STYLE_NORMAL);
+
     long currentTick = SDL_GetTicks64();
     long frameRate = 0;
 
@@ -54,11 +60,11 @@ int main(int argc, char *argv[]) {
 
         if (numTicksInFrame > 0) {
             frameRate = 1000 / (newTick - currentTick); // 1000 ms / ms in last frame
-            printf("fps: %ld\n", frameRate);
         } else {
             frameRate = 0;
-            printf("fps: inf\n");
         }
+
+        FC_Draw(font, renderer, 0, 0, "This is %s.\n It works.", "example text");
 
         currentTick = newTick;
         
@@ -71,6 +77,7 @@ int main(int argc, char *argv[]) {
     }
 
     // Cleanup
+    FC_FreeFont(font);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
